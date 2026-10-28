@@ -1,0 +1,22 @@
+{
+  "name": "Libra — لیبرا",
+  "short_name": "لیبرا",
+  "description": "مدیریت آفلاین هزینه‌ها، بودجه و یادآورها",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "background_color": "#fbfaf7",
+  "theme_color": "#203b36",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
