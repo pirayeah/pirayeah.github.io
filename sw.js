@@ -79,3 +79,19 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(request));
   }
 });
+
+// A task alarm's notification (WP-12): tapping it brings Libra forward on «کارهای من».
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+      if (open) {
+        await open.focus();
+        return open.navigate?.('/tasks/');
+      }
+      return self.clients.openWindow('/tasks/');
+    })(),
+  );
+});
