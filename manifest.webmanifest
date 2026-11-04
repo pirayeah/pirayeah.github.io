@@ -11,6 +11,12 @@
   "scope": "/",
   "background_color": "#f6f5f1",
   "theme_color": "#1f6f62",
+  "share_target": {
+    "action": "/share/",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  },
   "icons": [
     {
       "src": "/icon.svg",

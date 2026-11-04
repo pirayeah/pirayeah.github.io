@@ -1,4 +1,4 @@
-// Libra service worker: speed only, never data.
+// Libra service worker: speed only, never data (the Android Share hand-off below is memory only).
 //
 // GitHub Pages lets browsers keep files for 10 minutes, so a later visit re-checks every script
 // one round trip at a time, which is slow on mobile networks in Iran. This worker keeps the app's
@@ -64,10 +64,44 @@ async function networkFirst(request) {
   }
 }
 
+// Android «اشتراک‌گذاری» → لیبرا (manifest share_target, POST). The shared text (a bank SMS) stays
+// on the device: it is held in this worker's memory, handed once to /share/ and forgotten; it is
+// never put in a URL, cached, stored or sent. A copy not picked up within a minute is dropped.
+const SHARE_PATH = '/share/';
+const SHARE_TTL_MS = 60_000;
+let shared = null;
+
+async function receiveShare(request) {
+  try {
+    const form = await request.formData();
+    const pick = (name) => (typeof form.get(name) === 'string' ? form.get(name).trim() : '');
+    const text = pick('text') || pick('title');
+    shared = text ? { text: text.slice(0, 4000), at: Date.now() } : null;
+  } catch {
+    shared = null;
+  }
+  return Response.redirect(SHARE_PATH, 303);
+}
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'libra-share-take' || !event.ports[0]) return;
+  const fresh = shared && Date.now() - shared.at < SHARE_TTL_MS ? shared.text : null;
+  shared = null;
+  event.ports[0].postMessage({ text: fresh });
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  if (request.method !== 'GET') return;
   const url = new URL(request.url);
+  if (
+    request.method === 'POST' &&
+    url.origin === self.location.origin &&
+    url.pathname === SHARE_PATH
+  ) {
+    event.respondWith(receiveShare(request));
+    return;
+  }
+  if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return; // Supabase and everything else: untouched
   if (isImmutable(url.pathname)) {
     event.respondWith(cacheFirst(request));
