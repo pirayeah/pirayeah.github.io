@@ -114,18 +114,45 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// A task alarm's notification (WP-12): tapping it brings Libra forward on «کارهای من».
+// Web Push (WP-25): an encrypted message from Libra's server, shown as a notification even when
+// Libra is closed. Only title, text, the page to open and a tag (a newer one replaces an older one
+// with the same tag, so a task's alarm never shows twice) are in it; never amounts.
+self.addEventListener('push', (event) => {
+  let message = {};
+  try {
+    message = event.data ? event.data.json() : {};
+  } catch {
+    message = {};
+  }
+  const title = typeof message.title === 'string' ? message.title : 'لیبرا';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: typeof message.body === 'string' ? message.body : '',
+      tag: typeof message.tag === 'string' ? message.tag : undefined,
+      data: { url: message.url },
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      lang: 'fa',
+      dir: 'rtl',
+    }),
+  );
+});
+
+// Tapping a notification brings Libra forward on its page: the one the message names (only our
+// own pages), else «کارهای من» (a task alarm shown while Libra was open, WP-12).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const wanted = event.notification.data?.url;
+  const path = typeof wanted === 'string' && /^\/[a-z-]*\/?$/.test(wanted) ? wanted : '/tasks/';
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
       if (open) {
         await open.focus();
-        return open.navigate?.('/tasks/');
+        return open.navigate?.(path);
       }
-      return self.clients.openWindow('/tasks/');
+      return self.clients.openWindow(path);
     })(),
   );
 });
