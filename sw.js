@@ -9,7 +9,7 @@
 // It never touches other origins, so Supabase requests (sign-in, entries, amounts) always go
 // straight to the network and nothing personal is ever cached.
 
-const VERSION = 'libra-static-v1';
+const VERSION = 'libra-static-v2';
 const PAGE_WAIT_MS = 3000;
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -34,7 +34,9 @@ self.addEventListener('activate', (event) =>
 const isImmutable = (path) =>
   path.startsWith('/_next/static/') ||
   path.startsWith('/fonts/') ||
-  /^\/(icon\.svg|icon-\d+\.png|apple-touch-icon\.png|manifest\.webmanifest)$/.test(path);
+  /^\/(icon\.svg|icon-\d+\.png|badge-96\.png|apple-touch-icon\.png|manifest\.webmanifest)$/.test(
+    path,
+  );
 
 async function cacheFirst(request) {
   const cache = await caches.open(VERSION);
@@ -131,7 +133,7 @@ self.addEventListener('push', (event) => {
       tag: typeof message.tag === 'string' ? message.tag : undefined,
       data: { url: message.url },
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      badge: '/badge-96.png', // Android: white shape on transparent (iOS uses the app icon)
       lang: 'fa',
       dir: 'rtl',
     }),
